@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>USMLE Biostats Mastery Tracker</title>
+  <style>
+    /* ── Design tokens ── */
+    :root {
+      --clr-bg:        #f0f4f8;
+      --clr-surface:   #ffffff;
+      --clr-primary:   #1a3c5e;
+      --clr-accent:    #2980b9;
+      --clr-mastered:  #27ae60;
+      --clr-review:    #c0392b;
+      --clr-warn-bg:   #fdf3f3;
+      --clr-ok-bg:     #f0faf4;
+      --radius:        10px;
+      --shadow:        0 2px 12px rgba(0,0,0,0.08);
+      --transition:    0.25s ease;
+    }
+
+    /* ── Reset & base ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--clr-bg);
+      color: #2d3748;
+      padding: 24px 16px 60px;
+      line-height: 1.6;
+    }
+
+    /* ── Layout ── */
+    .container { max-width: 860px; margin: auto; }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, var(--clr-primary) 0%, var(--clr-accent) 100%);
+      color: white;
+      padding: 28px 32px;
+      border-radius: var(--radius);
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .header h1 { font-size: 1.8rem; margin-bottom: 6px; }
+    .header p  { opacity: 0.85; font-size: 0.95rem; }
+
+    /* ── Progress bar ── */
+    .progress-wrap {
+      background: var(--clr-surface);
+      border-radius: var(--radius);
+      padding: 18px 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow);
+    }
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--clr-primary);
+    }
+    .progress-bar-bg {
+      background: #e2e8f0;
+      border-radius: 99px;
+      height: 12px;
+      overflow: hidden;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--clr-mastered), #2ecc71);
+      border-radius: 99px;
+      transition: width 0.5s ease;
+      width: 0%;
+    }
+
+    /* ── Phase card ── */
+    .phase-card {
+      background: var(--clr-surface);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+      border-left: 6px solid var(--clr-review);
+      transition: border-color var(--transition), background var(--transition);
+    }
+    .phase-card.mastered {
+      border-left-color: var(--clr-mastered);
+      background: var(--clr-ok-bg);
+    }
+
+    /* ── Phase header ── */
+    .phase-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #e8edf2;
+      margin-bottom: 14px;
+    }
+    .phase-header h2 { font-size: 1.1rem; color: var(--clr-primary); }
+    .phase-meta { font-size: 0.78rem; color: #718096; margin-top: 2px; }
+
+    /* ── Toggle button ── */
+    .status-btn {
+      padding: 8px 18px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.82rem;
+      letter-spacing: 0.03em;
+      transition: background var(--transition), color var(--transition);
+      white-space: nowrap;
+      background: #fde8e8;
+      color: #9b2335;
+    }
+    .phase-card.mastered .status-btn {
+      background: #d4edda;
+      color: #155724;
+    }
+    .status-btn:hover { filter: brightness(0.93); }
+
+    /* ── Content lists ── */
+    .check-list { list-style: none; padding: 0; }
+    .check-list li {
+      padding: 6px 0 6px 18px;
+      position: relative;
+      font-size: 0.92rem;
+      border-bottom: 1px dashed #edf2f7;
+    }
+    .check-list li:last-child { border-bottom: none; }
+    .check-list li::before {
+      content: "▸";
+      position: absolute;
+      left: 0;
+      color: var(--clr-accent);
+      font-size: 0.85em;
+      top: 7px;
+    }
+
+    /* ── Math / formula box ── */
+    .math-box {
+      background: #eef4fb;
+      border: 1px solid #bee3f8;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-family: 'Courier New', monospace;
+      font-size: 0.88rem;
+      margin: 10px 0 14px;
+      color: #2b6cb0;
+    }
+
+    /* ── Mnemonic badge ── */
+    .mnemonic {
+      display: inline-block;
+      background: #fef9e7;
+      border: 1px solid #f6d860;
+      color: #7d6608;
+      border-radius: 5px;
+      padding: 3px 10px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    /* ── Tag pills ── */
+    .tags { margin-bottom: 10px; }
+    .tag {
+      display: inline-block;
+      background: #ebf4ff;
+      color: #2b6cb0;
+      border-radius: 99px;
+      padding: 2px 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-right: 4px;
+    }
+
+    /* ── Reset button ── */
+    .reset-wrap { text-align: center; margin-top: 32px; }
+    .reset-btn {
+      background: transparent;
+      border: 2px solid #cbd5e0;
+      color: #718096;
+      padding: 8px 22px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all var(--transition);
+    }
+    .reset-btn:hover { border-color: var(--clr-review); color: var(--clr-review); }
+
+    /* ── Responsive ── */
+    @media (max-width: 540px) {
+      .header h1 { font-size: 1.3rem; }
+      .phase-header { flex-direction: column; }
+      .status-btn { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>USMLE Step 1 — Biostats Mastery Tracker</h1>
+    <p>Transition from Memorization to Interpretation &nbsp;|&nbsp; Progress auto-saves in your browser</p>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>Overall Progress</span>
+      <span id="progress-text">0 / 6 phases mastered</span>
+    </div>
+    <div class="progress-bar-bg">
+      <div class="progress-bar-fill" id="progress-fill"></div>
+    </div>
+  </div>
+
+  <!-- ── Phase 1 ── -->
+  <div class="phase-card" id="phase1">
+    <div class="phase-header">
+      <div>
+        <h2>Phase 1 &mdash; The Foundation</h2>
+        <div class="phase-meta">Data types &bull; Normal distribution &bull; Central tendency</div>
+      </div>
+      <button class="status-btn" onclick="togglePhase('phase1')">Mark Mastered</button>
+    </div>
+    <div class="tags">
+      <span class="tag">Data Types</span>
+      <span class="tag">Distributions</span>
+    </div>
+    <span class="mnemonic">Mnemonic: NOIR</span>
+    <ul class="check-list">
+      <li><strong>Nominal</strong> — Categories with no order (e.g., blood type, sex).</li>
+      <li><strong>Ordinal</strong> — Ordered categories, unequal intervals (e.g., pain scale 1–10).</li>
+      <li><strong>Interval</strong> — Equal intervals, no true zero (e.g., temperature °C).</li>
+      <li><strong>Ratio</strong> — Equal intervals + true zero (e.g., weight, height).</li>
+      <li><strong>68-95-99.7 Rule</strong> — 1 SD covers 68 %, 2 SD covers 95 %, 3 SD covers 99.7 % of data.</li>
+      <li><strong>Mean vs. Median</strong> — Skewed data: mean is pulled toward the tail; use median for skewed distributions.</li>
+      <li><strong>Positive skew</strong> — Mean &gt; Median &gt; Mode (tail to the right).</li>
+      <li><strong>Negative skew</strong> — Mean &lt; Median &lt; Mode (tail to the left).</li>
+    </ul>
+  </div>
+
+  <!-- ── Phase 2 ── -->
+  <div class="phase-card" id="phase2">
+    <div class="phase-header">
+      <div>
+        <h2>Phase 2 &mdash; Observational Study Designs</h2>
+        <div class="phase-meta">Case-control &bull; Cohort &bull; Cross-sectional &bull; Ecological</div>
+      </div>
+      <button class="status-btn" onclick="togglePhase('phase2')">Mark Mastered</button>
+    </div>
+    <div class="tags">
+      <span class="tag">Study Design</span>
+      <span class="tag">Epidemiology</span>
+    </div>
+    <ul class="check-list">
+      <li><strong>Case-Control</strong> — "Rare Disease Detective." Start with disease, look <em>backward</em> for exposure. Measure: <strong>Odds Ratio (OR)</strong>.</li>
+      <li><strong>Cohort (Prospective)</strong> — Start with exposure, follow <em>forward</em> for outcome. Measure: <strong>Relative Risk (RR)</strong>.</li>
+      <li><strong>Cohort (Retrospective)</strong> — Both exposure and outcome already occurred; look backward using records. Measure: <strong>RR</strong>.</li>
+      <li><strong>Cross-Sectional</strong> — Snapshot in time; exposure and outcome measured simultaneously. Measure: <strong>Prevalence</strong>.</li>
+      <li><strong>Ecological</strong> — Population-level data; cannot infer individual risk (ecological fallacy).</li>
+      <li><strong>RCT</strong> — Gold standard; random allocation eliminates confounding.</li>
+    </ul>
+    <div class="math-box">
+      RR = [a/(a+b)] ÷ [c/(c+d)]<br>
+      OR = (a×d) ÷ (b×c)<br>
+      <em>RR ≈ OR when disease is rare (&lt;10 %)</em>
+    </div>
+  </div>
+
+  <!-- ── Phase 3 ── -->
+  <div class="phase-card" id="phase3">
+    <div class="phase-header">
+      <div>
+        <h2>Phase 3 &mdash; Diagnostic Tests &amp; Errors</h2>
+        <div class="phase-meta">Sensitivity &bull; Specificity &bull; PPV &bull; NPV &bull; Type I/II errors</div>
+      </div>
+      <button class="status-btn" onclick="togglePhase('phase3')">Mark Mastered</button>
+    </div>
+    <div class="tags">
+      <span class="tag">Diagnostics</span>
+      <span class="tag">Hypothesis Testing</span>
+    </div>
+    <span class="mnemonic">Mnemonic: SnNout / SpPin</span>
+    <div class="math-box">
+      Sensitivity = TP / (TP + FN) — "Rules OUT disease when negative"<br>
+      Specificity = TN / (TN + FP) — "Rules IN disease when positive"<br>
+      PPV = TP / (TP + FP) — depends on prevalence<br>
+      NPV = TN / (TN + FN) — depends on prevalence<br>
+      LR+ = Sensitivity / (1 − Specificity)<br>
+      LR− = (1 − Sensitivity) / Specificity
+    </div>
+    <ul class="check-list">
+      <li><strong>Type I Error (α)</strong> — False positive; rejecting H₀ when it is true. Controlled by significance level (p-value threshold).</li>
+      <li><strong>Type II Error (β)</strong> — False negative; failing to reject H₀ when it is false.</li>
+      <li><strong>Power (1 − β)</strong> — Probability of correctly detecting a true effect. Increases with larger N, larger effect size, or higher α.</li>
+      <li><strong>ROC Curve</strong> — Plots sensitivity vs. (1 − specificity). Best test = top-left corner. AUC = 1.0 is perfect.</li>
+      <li><strong>Prevalence &amp; PPV</strong> — High prevalence → higher PPV; low prevalence → lower PPV (even with good Sp).</li>
+    </ul>
+  </div>
+
+  <!-- ── Phase 4 ── -->
+  <div class="phase-card" id="phase4">
+    <div class="phase-header">
+      <div>
+        <h2>Phase 4 &mdash; Bias, Confounding &amp; Validity</h2>
+        <div class="phase-meta">Selection bias &bull; Information bias &bull; Confounding &bull; Internal vs. external validity</div>
+      </div>
+      <button class="status-btn" onclick="togglePhase('phase4')">Mark Mastered</button>
+    </div>
+    <div class="tags">
+      <span class="tag">Bias</span>
+      <span class="tag">Validity</span>
+    </div>
+    <ul class="check-list">
+      <li><strong>Selection Bias</strong> — Systematic error in how participants are chosen (e.g., Berkson's bias, healthy worker effect).</li>
+      <li><strong>Recall Bias</strong> — Cases remember exposures better than controls (common in case-control studies).</li>
+      <li><strong>Lead-time Bias</strong> — Screening detects disease earlier; survival appears longer without true benefit.</li>
+      <li><strong>Length-time Bias</strong> — Screening preferentially detects slow-growing (less lethal) disease.</li>
+      <li><strong>Confounding</strong> — A third variable associated with both exposure and outcome (e.g., smoking confounds alcohol–lung cancer link). Fix: randomization, restriction, matching, multivariate analysis.</li>
+      <li><strong>Effect Modification</strong> — Effect of exposure differs across strata of a third variable; NOT a bias — report separately.</li>
+      <li><strong>Internal Validity</strong> — Results are correct for the study population.</li>
+      <li><strong>External Validity (Generalizability)</strong> — Results apply to other populations.</li>
+    </ul>
+  </div>
+
+  <!-- ── Phase 5 ── -->
+  <div class="phase-card" id="phase5">
+    <div class="phase-header">
+      <div>
+        <h2>Phase 5 &mdash; Advanced Statistical Tests</h2>
+        <div class="phase-meta">ANOVA &bull; Chi-square &bull; Correlation &bull; Regression &bull; Forest plots</div>
+      </div>
+      <button class="status-btn" onclick="togglePhase('phase5')">Mark Mastered</button>
+    </div>
+    <div class="tags">
+      <span class="tag">Inferential Stats</span>
+      <span class="tag">Meta-analysis</span>
+    </div>
+    <ul class="check-list">
+      <li><strong>t-test</strong> — Compares means of 2 groups (parametric; assumes normal distribution).</li>
+      <li><strong>ANOVA</strong> — Compares means of 3+ groups; follow up with post-hoc test to find which groups differ.</li>
+      <li><strong>Chi-square (χ²)</strong> — Compares proportions / categorical data between groups.</li>
+      <li><strong>Pearson r</strong> — Linear relationship between 2 continuous variables (−1 to +1). r² = variance explained.</li>
+      <li><strong>Spearman ρ</strong> — Non-parametric rank correlation; use when data are ordinal or non-normal.</li>
+      <li><strong>Regression</strong> — Linear: predicts continuous outcome. Logistic: predicts binary outcome (outputs OR).</li>
+      <li><strong>Forest Plot</strong> — Meta-analysis summary. Each row = one study; diamond = pooled estimate. If CI crosses 1.0 → not significant.</li>
+      <li><strong>Funnel Plot</strong> — Checks for publication bias in meta-analysis; asymmetry suggests bias.</li>
+    </ul>
+    <div class="math-box">
+      p-value &lt; α → reject H₀ (statistically significant)<br>
+      95 % CI that excludes 1.0 (for RR/OR) or 0 (for difference) → significant
+    </div>
+  </div>
+
+  <!-- ── Phase 6 ── -->
+  <div class="phase-card" id="phase6">
+    <div class="phase-header">
+      <div>
+        <h2>Phase 6 &mdash; Prevention &amp; Screening</h2>
+        <div class="phase-meta">Primary &bull; Secondary &bull; Tertiary &bull; NNT &bull; NNH</div>
+      </div>
+      <button class="status-btn" onclick="togglePhase('phase6')">Mark Mastered</button>
+    </div>
+    <div class="tags">
+      <span class="tag">Prevention</span>
+      <span class="tag">Clinical Application</span>
+    </div>
+    <ul class="check-list">
+      <li><strong>Primary Prevention</strong> — Prevent disease before it occurs (e.g., vaccination, lifestyle counseling).</li>
+      <li><strong>Secondary Prevention</strong> — Early detection &amp; treatment (e.g., mammography, Pap smear).</li>
+      <li><strong>Tertiary Prevention</strong> — Reduce disability from established disease (e.g., cardiac rehab).</li>
+      <li><strong>Absolute Risk Reduction (ARR)</strong> — Risk<sub>control</sub> − Risk<sub>treatment</sub>.</li>
+      <li><strong>Relative Risk Reduction (RRR)</strong> — ARR ÷ Risk<sub>control</sub>.</li>
+      <li><strong>NNT</strong> — 1 / ARR. Smaller = more effective treatment.</li>
+      <li><strong>NNH</strong> — 1 / Absolute Risk Increase. Larger = safer drug.</li>
+    </ul>
+    <div class="math-box">
+      ARR = CER − EER<br>
+      NNT = 1 / ARR &nbsp;&nbsp; NNH = 1 / ARI
+    </div>
+  </div>
+
+  <!-- Reset -->
+  <div class="reset-wrap">
+    <button class="reset-btn" onclick="resetAll()">Reset All Progress</button>
+  </div>
+
+</div><!-- /.container -->
+
+<script>
+  const TOTAL = 6;
+
+  /* ── Persist & restore ── */
+  function saveState() {
+    const state = {};
+    for (let i = 1; i <= TOTAL; i++) {
+      const id = 'phase' + i;
+      state[id] = document.getElementById(id).classList.contains('mastered');
+    }
+    localStorage.setItem('biostats_mastery', JSON.stringify(state));
+  }
+
+  function loadState() {
+    const raw = localStorage.getItem('biostats_mastery');
+    if (!raw) return;
+    const state = JSON.parse(raw);
+    for (let i = 1; i <= TOTAL; i++) {
+      const id = 'phase' + i;
+      if (state[id]) applyMastered(id, true);
+    }
+  }
+
+  /* ── Apply visual state ── */
+  function applyMastered(id, mastered) {
+    const card = document.getElementById(id);
+    const btn  = card.querySelector('.status-btn');
+    if (mastered) {
+      card.classList.add('mastered');
+      btn.innerText = 'Review Needed';
+    } else {
+      card.classList.remove('mastered');
+      btn.innerText = 'Mark Mastered';
+    }
+  }
+
+  /* ── Toggle ── */
+  function togglePhase(id) {
+    const card    = document.getElementById(id);
+    const mastered = !card.classList.contains('mastered');
+    applyMastered(id, mastered);
+    saveState();
+    updateProgress();
+  }
+
+  /* ── Progress bar ── */
+  function updateProgress() {
+    let count = 0;
+    for (let i = 1; i <= TOTAL; i++) {
+      if (document.getElementById('phase' + i).classList.contains('mastered')) count++;
+    }
+    const pct = Math.round((count / TOTAL) * 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-text').innerText = count + ' / ' + TOTAL + ' phases mastered';
+  }
+
+  /* ── Reset ── */
+  function resetAll() {
+    if (!confirm('Reset all progress? This cannot be undone.')) return;
+    localStorage.removeItem('biostats_mastery');
+    for (let i = 1; i <= TOTAL; i++) applyMastered('phase' + i, false);
+    updateProgress();
+  }
+
+  /* ── Init ── */
+  loadState();
+  updateProgress();
+</script>
+
+</body>
+</html>
